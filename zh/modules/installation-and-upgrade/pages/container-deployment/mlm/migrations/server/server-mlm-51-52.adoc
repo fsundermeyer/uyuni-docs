@@ -1,0 +1,444 @@
+= 服务器从 5.1 升级到 5.2
+:revdate: 2026-06-30
+:page-revdate: {revdate}
+
+
+[IMPORTANT]
+====
+升级前必须停止 {productname} 5.1。
+====
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-hardened-tmpdir.adoc[leveloffset=+2]
+include::installation-and-upgrade:partial$snippet-certificate-validators.adoc[leveloffset=+1]
+include::installation-and-upgrade:partial$snippet-ssl-requirements.adoc[leveloffset=+1]
+include::installation-and-upgrade:partial$snippet-version-number.adoc[leveloffset=+1]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-hardened-tmpdir.adoc[leveloffset=+2]
+include::../../../../../partials/snippet-certificate-validators.adoc[leveloffset=+1]
+include::../../../../../partials/snippet-ssl-requirements.adoc[leveloffset=+1]
+include::../../../../../partials/snippet-version-number.adoc[leveloffset=+1]
+endif::[]
+
+迁移期间会从源服务器复制服务器 SSL 证书和 CA 链，这意味着您只需准备数据库证书即可。
+
+
+
+== {sl-micro} 6.1 到 {sl-micro} 6.2
+
+
+
+本文件提供了经过测试的升级流程，用于将部署了 {sl-micro} 6.1 主机的 {productname} 5.1 服务器升级到 {sl-micro} 6.2 并迁移到 {productname} {productnumber}。
+
+
+=== 先决条件
+
+* {productname} 5.1 已安装并在 {sl-micro} 6.1 上运行。
+* 系统已注册到 {scc} 且拥有有效的订阅。
+
+
+=== 发行套件升级和服务器迁移
+
+.过程：升级从 {productname} 5.1 迁移到 {productname} {productnumber}
+[role=procedure]
+____
+
+. 校验当前产品状态
+
++
+
+[source,console]
+----
+SUSEConnect --status-text
+----
+
++
+
+确认以下信息：
+
+* 基础操作系统：`SL Micro 6.1`
+* 扩展：`SUSE Multi-Linux Manager Server 5.1 Extension`
+
++
+
+. 确保系统已更新
+
++
+
+[source,console]
+----
+transactional-update patch
+----
+
++
+
+--
+
+* 如果已应用补丁，请在继续迁移前\\**重引导系统**：
+
++
+
+[source,console]
+----
+mgradm stop
+reboot
+----
+
+* 如果未发现更新，可直接进入迁移步骤。
+
+--
+
++
+
+. 启动迁移流程：
+
++
+
+[source,console]
+----
+transactional-update migration --auto-agree-with-licenses --gpg-auto-import-keys
+----
+
++
+
+按照提示操作，选择可用的迁移目标：**SUSE Linux Micro 6.2** 和 **{productname} 服务器扩展 {productnumber}**。
+
++
+
+. 清理未使用的容器映像以释放磁盘空间：
+
++
+[source,shell]
+----
+podman image prune -a
+----
+
++
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-check-rpmnew-rpmsave.adoc[]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-check-rpmnew-rpmsave.adoc[]
+endif::[]
+
++
+
+. 停止服务器后重引导，使更改生效。
+
++
+
+[source,console]
+----
+mgradm stop
+reboot
+----
+
++
+
+. 重引导后的检查：
+
++
+
+验证 {productname} 扩展和 {productname} 版本：
+
++
+
+[source,console]
+----
+SUSEConnect --status-text
+mgradm --version
+----
+
++
+
+预期输出：
+
+* 扩展：`SUSE Multi-Linux Manager Server {productnumber} Extension`
+* 版本：`mgradm version 5.2.0` 或更高版本
+
++
+
+. 升级服务器容器
+
++
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-ptf-loss-during-upgrade.adoc[]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-ptf-loss-during-upgrade.adoc[]
+endif::[]
+
++
+
+[source,console]
+----
+mgradm start
+mgradm upgrade podman
+----
+
++
+
+按照提示操作，以拉取并配置新的 5.2.x 容器。
+
+
+. PostgreSQL 版本
+
++
+
+[source,console]
+----
+podman ps
+----
+
++
+
+预期输出：
+
+* `server:5.2.0` 或更高版本
+* `server-postgresql:5.2.0` 或更高版本
+
++
+
+. 清理未使用的容器映像以释放磁盘空间：
+
++
+[source,shell]
+----
+podman image prune -a
+----
+
++
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-check-rpmnew-rpmsave.adoc[]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-check-rpmnew-rpmsave.adoc[]
+endif::[]
+
++
+
+. 检查正在运行的容器。
+
++
+
+[source,console]
+----
+podman ps
+----
+
++
+
+所有预期的代理容器均应正常启动并运行：
+
+____
+
+
+=== 迁移完成
+
+服务器主机系统现在运行 {sl-micro} 6.2，并带有更新的 {productname} {productnumber} 服务器软件包。
+
+如果您有一个连接到此服务器的 {productname} 5.1 代理，请参阅 xref:installation-and-upgrade:container-deployment/mlm/migrations/proxy/proxy-mlm-51-52.adoc[Proxy Migration 5.1 > 5.2] 指南以升级代理主机。
+
+在恢复生产操作之前，请验证您的设置。
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-database-backup-volume.adoc[leveloffset=+2]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-database-backup-volume.adoc[leveloffset=+2]
+endif::[]
+
+
+== {sles} 15 SP7
+
+本文件提供了升级流程，用于将部署了 {sles} 15 SP7 主机的 {productname} 5.1 服务器升级到 {productname} {productnumber}。
+
+
+=== 先决条件
+
+* {productname} 5.1 已安装并在 {sles} 15 SP7 上运行。
+* 系统已注册到 {scc} 且拥有有效的订阅。
+
+
+=== 升级和迁移
+
+.过程：升级更新 {productname} 15 SP7 上的 {sles} 组件
+[role=procedure]
+____
+
+. 校验当前产品状态
+
++
+
+[source,console]
+----
+SUSEConnect --status-text
+----
+
++
+
+确认以下信息：
+
+* 基础操作系统：`SUSE Linux Enterprise Server 15 SP7`
+* 扩展：`SUSE Multi-Linux Manager Server 5.1 Extension`
+
++
+
+. 确保系统已更新
+
++
+
+[source,console]
+----
+zypper patch
+----
+
++
+
+如果已应用补丁，请在继续迁移前停止服务器，然后重引导系统：
+
++
+
+[source,console]
+----
+mgradm stop
+reboot
+----
+
++
+
+. 执行迁移到 {productname} {productnumber}。
+
++
+
+[source,console]
+----
+zypper migration
+----
+
++
+
+选择您的时区。
+
+* `{productname} Server Extension {productnumber}`
+
++
+
+. 停止服务器后重引导，使更改生效。
+
++
+
+[source,console]
+----
+mgradm stop
+reboot
+----
+
++
+
+. 重引导后的检查：
+
++
+
+验证 {productname} 扩展：
+
++
+
+[source,console]
+----
+SUSEConnect --status-text
+----
+
++
+
+预期输出：
+
+* 扩展：`SUSE Multi-Linux Manager Server {productnumber} Extension`
+
++
+
+. 验证 {productname} 版本。
+
++
+
+[source,console]
+----
+mgradm --version
+----
+
++
+
+预期输出：
+
+* 版本：`mgradm version 5.2.0` 或更高版本
+
++
+
+. 升级服务器容器
+
++
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-ptf-loss-during-upgrade.adoc[]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-ptf-loss-during-upgrade.adoc[]
+endif::[]
+
++
+
+[source,console]
+----
+mgradm start
+mgradm upgrade podman
+----
+
++
+
+按照提示操作，以拉取并配置新的 5.2.x 容器。
+
+
+. 更新容器
+
++
+
+[source,console]
+----
+podman ps
+----
+
++
+
+预期输出：
+
+* `server:5.2.0` 或更高版本
+* `server-postgresql:5.2.0` 或更高版本
+
+____
+
+
+=== 迁移完成
+
+服务器主机系统现在运行 {sles} 15 SP7，并带有更新的 {productname} {productnumber} 服务器软件包。
+
+如果您有一个连接到此服务器的 {productname} 5.1 代理，请参阅 xref:installation-and-upgrade:container-deployment/mlm/migrations/proxy/proxy-mlm-51-52.adoc[Proxy Migration 5.1 > 5.2] 指南以升级代理主机。
+
+在恢复生产操作之前，请验证您的设置。
+
+ifndef::backend-pdf[]
+include::installation-and-upgrade:partial$snippet-database-backup-volume.adoc[leveloffset=+2]
+endif::[]
+
+ifdef::backend-pdf[]
+include::../../../../../partials/snippet-database-backup-volume.adoc[leveloffset=+2]
+endif::[]

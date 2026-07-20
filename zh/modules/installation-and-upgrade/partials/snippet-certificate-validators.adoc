@@ -1,0 +1,8 @@
+[IMPORTANT]
+====
+在升级之前，请验证 {productname} 使用的每个 root CA 证书和中间 CA 证书是否将 `X509v3 Basic Constraints` 标记为 `critical` 并包含 `CA:TRUE`。
+严格的证书验证程序（包括 Python 3.13 及更高版本）会拒绝缺少 `critical` 标志的 CA 证书。
+
+如果您的安装使用了由 {productname} 生成的旧版自签名 CA，您可能需要创建新的 CA 和新的服务器证书，然后将新的 root CA 部署到所有客户端。
+有关验证命令、证书替换和客户端 root CA 部署过程，请参阅 xref:administration:ssl-certs-imported.adoc#ssl-certs-verify-ca-basic-constraints[]、xref:administration:ssl-certs-selfsigned.adoc#ssl-certs-selfsigned-create-replace[] 和 xref:administration:ssl-certs-imported.adoc#ssl-certs-import-deploy-root-ca[]。
+====
