@@ -1,0 +1,8 @@
+[IMPORTANT]
+====
+업그레이드하기 전에 {productname}에서 사용하는 모든 루트 및 중간 CA 인증서가 `X509v3 Basic Constraints`를 `critical`(으)로 표시하고 `CA:TRUE`를 포함하는지 확인하십시오.
+Python 3.13 이상을 포함한 엄격한 인증서 유효성 검사기는 `critical` 플래그가 누락된 CA 인증서를 거부합니다.
+
+설치 시 {productname}(으)로 생성된 이전 자체 서명 CA를 사용하는 경우, 새 CA와 새 서버 인증서를 생성한 다음 모든 클라이언트에 새 루트 CA를 배포해야 할 수 있습니다.
+인증 명령, 인증서 교체 및 클라이언트 루트 CA 배포 절차는 xref:administration:ssl-certs-imported.adoc#ssl-certs-verify-ca-basic-constraints[], xref:administration:ssl-certs-selfsigned.adoc#ssl-certs-selfsigned-create-replace[] 및 xref:administration:ssl-certs-imported.adoc#ssl-certs-import-deploy-root-ca[]를 참조하십시오.
+====

@@ -1,0 +1,8 @@
+[[install-pubcloud]]
+= 公有云部署
+:revdate: 2024-11-20
+:page-revdate: {revdate}
+
+公有云在 {productname} ({byoslongform}) 或 {byos} ({payglongform}) 模型下提供 {payg}.
+
+有关在公有云中使用 {productname} 的更多信息，请参见 xref:specialized-guides:public-cloud-guide/overview.adoc[公共云指南]。

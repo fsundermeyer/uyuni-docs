@@ -1,0 +1,8 @@
+[IMPORTANT]
+====
+アップグレードの前に、{productname}で使用されるすべてのルートおよび中間CA証明書が、`X509v3 Basic Constraints`を`critical`としてマークし、`CA:TRUE`を含んでいることを確認してください。
+Python 3.13以降を含む厳格な証明書バリデーターは、`critical`フラグが欠落しているCA証明書を拒否します。
+
+インストール環境で{productname}によって生成された古い自己署名CAを使用している場合は、新しいCAと新しいサーバー証明書を作成し、新しいルートCAをすべてのクライアントにデプロイする必要があるかもしれません。
+検証コマンド、証明書の置き換え、およびクライアントへのルートCAデプロイメント手順については、xref:administration:ssl-certs-imported.adoc#ssl-certs-verify-ca-basic-constraints[]、xref:administration:ssl-certs-selfsigned.adoc#ssl-certs-selfsigned-create-replace[]、およびxref:administration:ssl-certs-imported.adoc#ssl-certs-import-deploy-root-ca[]を参照してください。
+====
